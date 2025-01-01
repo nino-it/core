@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar</title>
+    <style>
+        body {
+            background-color: #111;
+            color: #fff;
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .calendar-container {
+            width: 1350px;
+            margin: 20px auto;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background-color: #222;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background-color: #333;
+            border-bottom: 1px solid #444;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .calendar-header .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-button {
+            background-color: #444;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 15px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .nav-button:hover {
+            background-color: #555;
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0;
+            text-align: left;
+            border-top: 1px solid #444;
+        }
+
+        .calendar-day {
+            height: 150px;
+            padding: 10px;
+            border: 1px solid #333;
+            box-sizing: border-box;
+            position: relative;
+            background-color: #222;
+        }
+
+        .calendar-day:hover {
+            background-color: #2a2a2a;
+        }
+
+        .calendar-day .day-number {
+            font-size: 18px;
+            font-weight: bold;
+            color: #aaa;
+        }
+
+        .calendar-day .articles {
+            margin: 10px 0 0;
+            list-style: none;
+            padding: 0;
+            font-size: 14px;
+        }
+
+        .calendar-day .articles li {
+            color: #0f8;
+            cursor: pointer;
+            margin: 3px 0;
+        }
+
+        .calendar-day .articles li:hover {
+            text-decoration: underline;
+        }
+
+        .calendar-day .articles li::marker {
+            content: none;
+        }
+
+        .day-header {
+            text-align: center;
+            font-weight: bold;
+            color: #aaa;
+            background-color: #333;
+            border: 1px solid #444;
+            padding: 10px 0;
+        }
+
+        button.create-article {
+            margin-bottom: 20px;
+            padding: 10px 15px;
+            font-size: 16px;
+            background-color: #444;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button.create-article:hover {
+            background-color: #555;
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            z-index: 1000;
+        }
+
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #222;
+            border-radius: 8px;
+            padding: 20px;
+            width: 400px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+            display: none;
+        }
+
+        .popup.active,
+        .popup-overlay.active {
+            display: block;
+        }
+
+        .popup-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .popup-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .popup-close:hover {
+            color: #f00;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+
+        input,
+        textarea,
+        button {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background: #333;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="calendar-container">
+
+        <!-- <div class="calendar-header">
+            <button class="nav-button">&larr; Previous</button>
+            <div>{{ current_month_name }} {{ current_year }}</div>
+            <button class="nav-button">Next &rarr;</button>
+        </div> -->
+
+        <div class="calendar-nav">
+            <form method="get" style="display: inline;">
+                <input type="hidden" name="year" value="{{ previous_year }}">
+                <input type="hidden" name="month" value="{{ previous_month }}">
+                <button>&larr; Previous</button>
+            </form>
+            <h3>{{ current_month_name }} {{ current_year }}</h3>
+            <form method="get" style="display: inline;">
+                <input type="hidden" name="year" value="{{ next_year }}">
+                <input type="hidden" name="month" value="{{ next_month }}">
+                <button>Next &rarr;</button>
+            </form>
+        </div>
+        <button id="create-article-btn" class="btn btn-primary">Create New Article</button>
+        <div class="calendar">
+            {% for day_name in day_headers %}
+            <div class="day-header">{{ day_name }}</div>
+            {% endfor %}
+            {% for day in calendar_days %}
+            <div class="calendar-day">
+                {% if day %}
+                <div class="day-number">{{ day.day }}</div>
+                {% if day.articles %}
+                {% for article in day.articles %}
+                <div class="article-title" data-id="{{ article.id }}">{{ article.title }}</div>
+                {% endfor %}
+                {% endif %}
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Popup -->
+    <div class="popup-overlay"></div>
+    <div class="popup">
+        <button class="popup-close">&times;</button>
+        <div class="popup-header">Edit Article</div>
+        <form id="edit-form" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="id" id="article-id">
+            <label for="article-title">Title</label>
+            <input type="text" name="title" id="article-title" placeholder="Title">
+            <label for="article-text">Text</label>
+            <textarea name="text" id="article-text" placeholder="Text"></textarea>
+            <label for="article-category">Category</label>
+            <input type="text" name="category" id="article-category" placeholder="Category">
+            <label for="article-priority">Priority</label>
+            <input type="number" name="priority" id="article-priority" placeholder="Priority">
+            <label for="article-time_scheduled">Time Scheduled</label>
+            <input type="datetime-local" name="time_scheduled" id="article-time_scheduled">
+            <button type="submit">Save</button>
+            <button type="button" class="delete">Delete</button>
+        </form>
+    </div>
+
+    <script>
+        const titles = document.querySelectorAll('.article-title');
+        const createBtn = document.getElementById('create-article-btn');
+        const popup = document.querySelector('.popup');
+        const overlay = document.querySelector('.popup-overlay');
+        const closeButton = document.querySelector('.popup-close');
+        const form = document.getElementById('edit-form');
+
+        // New: Select all calendar days
+        const calendarDays = document.querySelectorAll('.calendar-day');
+
+        titles.forEach(title => {
+            title.addEventListener('click', function () {
+                const articleId = this.dataset.id;
+                fetch(`/article/edit-or-create/?id=${articleId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('article-id').value = data.id;
+                        document.getElementById('article-title').value = data.title;
+                        document.getElementById('article-text').value = data.text;
+                        document.getElementById('article-category').value = data.category;
+                        document.getElementById('article-priority').value = data.priority;
+                        document.getElementById('article-time_scheduled').value = data.time_scheduled?.slice(0, 16); // Fixed time format
+                        popup.classList.add('active');
+                        overlay.classList.add('active');
+                    })
+                    .catch(error => {
+                        console.error('Error fetching article:', error);
+                        alert('Failed to load article data. Please try again.');
+                    });
+            });
+        });
+
+        // New: Add click event to calendar days
+        calendarDays.forEach(day => {
+            day.addEventListener('click', function () {
+                // Get the day number from the day-number div
+                const dayNumberElement = this.querySelector('.day-number');
+                if (dayNumberElement) {
+                    const dayNumber = dayNumberElement.textContent.trim();
+
+                    // Get current year and month from the header
+                    const headerText = document.querySelector('.calendar-nav h3').textContent;
+                    const [currentMonthName, currentYear] = headerText.split(' ');
+
+                    // Create a date string in the format required by datetime-local input
+                    const currentDate = new Date(`${currentMonthName} 1, ${currentYear}`);
+                    const formattedDate = new Date(
+                        currentDate.getFullYear(),
+                        currentDate.getMonth(),
+                        parseInt(dayNumber)
+                    );
+
+                    // Format the date to be compatible with datetime-local input
+                    const formattedDateString = formattedDate.toISOString().slice(0, 16);
+
+                    // Reset and populate the form
+                    document.getElementById('article-id').value = '';
+                    document.getElementById('article-title').value = '';
+                    document.getElementById('article-text').value = '';
+                    document.getElementById('article-category').value = '';
+                    document.getElementById('article-priority').value = '';
+                    document.getElementById('article-time_scheduled').value = formattedDateString;
+
+                    popup.classList.add('active');
+                    overlay.classList.add('active');
+                }
+            });
+        });
+
+        createBtn.addEventListener('click', () => {
+            document.getElementById('article-id').value = '';
+            document.getElementById('article-title').value = '';
+            document.getElementById('article-text').value = '';
+            document.getElementById('article-category').value = '';
+            document.getElementById('article-priority').value = '';
+            document.getElementById('article-time_scheduled').value = '';
+            popup.classList.add('active');
+            overlay.classList.add('active');
+        });
+
+        closeButton.addEventListener('click', () => {
+            popup.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+
+        overlay.addEventListener('click', () => {
+            popup.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+
+        document.querySelector('.delete').addEventListener('click', function () {
+            const articleId = document.getElementById('article-id').value;
+            if (articleId) {
+                fetch('/article/delete/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `id=${articleId}`
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Article deleted successfully');
+                            window.location.reload();
+                        } else {
+                            alert('Error deleting article');
+                        }
+                    });
+            }
+        });
+
+        form.addEventListener('submit', function (event) {
+            event.preventDefault(); // Prevent page reload
+            const formData = new FormData(form);
+            fetch('/article/edit-or-create/', {
+                method: 'POST',
+                body: new URLSearchParams(formData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Article saved successfully');
+                        window.location.reload(); // Refresh to reflect changes
+                    } else {
+                        alert('Error saving article');
+                    }
+                });
+        });
+
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Create New Article</h2>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="{{ form.title.id_for_label }}">Title</label>
+            {{ form.title }}
+            {% if form.title.errors %}
+            <div class="error">{{ form.title.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.text.id_for_label }}">Article Text</label>
+            {{ form.text }}
+            {% if form.text.errors %}
+            <div class="error">{{ form.text.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.category.id_for_label }}">Category</label>
+            {{ form.category }}
+            <datalist id="category-list">
+                {% for category in categories %}
+                <option value="{{ category }}">
+                    {% endfor %}
+            </datalist>
+            {% if form.category.errors %}
+            <div class="error">{{ form.category.errors }}</div>
+            {% endif %}
+        </div>
+
+
+        <!-- GOVNOOOOOOOOOOOOO -->
+        <div class="form-group">
+            <label for="schedule_checkbox">
+                <input type="checkbox" id="schedule_checkbox"> Schedule this article
+            </label>
+        </div>
+
+        <div class="form-group" id="time_scheduled_wrapper" style="display: none;">
+            <label for="{{ form.time_scheduled.id_for_label }}">Time Scheduled</label>
+            {{ form.time_scheduled|default_if_none:'' }}
+            {% if form.time_scheduled.errors %}
+            <div class="error">{{ form.time_scheduled.errors }}</div>
+            {% endif %}
+        </div>
+
+
+        <!-- GOVNOOOOOOOOOOOOO -->
+
+
+
+        <div class="form-group">
+            <label for="{{ form.priority.id_for_label }}">Priority</label>
+            {{ form.priority }}
+            {% if form.priority.errors %}
+            <div class="error">{{ form.priority.errors }}</div>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit Article</button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const checkbox = document.getElementById('schedule_checkbox');
+        const datetimeWrapper = document.getElementById('time_scheduled_wrapper');
+
+        checkbox.addEventListener('change', function () {
+            datetimeWrapper.style.display = this.checked ? 'block' : 'none';
+        });
+    });
+</script>
+{% endblock %}
